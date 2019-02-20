@@ -1,6 +1,8 @@
-var list = [];
+var strips = [];
 var size = 10;
 var segments = [];
+var colors = [[255,0,0],[0,255,0],[0,0,255]];
+
 
 function setup() {
   createCanvas(800, 800);
@@ -9,50 +11,45 @@ function setup() {
   //  list.push(new Pixel(200,i));
   // }
   segments.push(new LSegment(0,0,-150,150))
-  segments.push(new LSegment(0.13,20.5,-150,150))
-  segments.push(new LSegment(0.23,35.5,-150,150))
-  segments.push(new LSegment(-0.13,-20.5,-150,150))
-  segments.push(new LSegment(-0.23,-35.5,-150,150))
+  segments.push(new LSegment((40/300.0),20,-150,150))
+  segments.push(new LSegment((70/300.0),35,-150,150))
+  segments.push(new LSegment(-(40/300.0),-20,-150,150))
+  segments.push(new LSegment(-(70/300.0),-35,-150,150))
   rectMode(CENTER)
-  draw2()
+
+  background(100);
+  
+  // drawGrid();
+  
+  for(var i=0;i<segments.length;i++){
+    var list = segments[i].mapPixels(20);
+    strips.push(new Strip(list));
+  };
+  for(var i=0;i<strips.length;i++){
+    var strip = strips[i];
+    strip.wipe(255,0,0,200) ;
+    // strip.wipe(0,255,0,200) ;
+    // strip.wipe(0,0,255,200) ;
+  }  
 }
 
 function draw() {
-  
+translate(400, 400);
 }
-function draw2(){
-  background(100);
-  translate(400, 400);
-  drawGrid();
-  stroke(0);
-  // line(200, 0, 200, 300);
-  line(0, -150, 0, 150);
-  line(0, -150, 40, 150);
-  line(0, -150, 70, 150);
-  line(0, -150, -40, 150);
-  line(0, -150, -70, 150);
-  // line(200, 0, 180, 300);
-  stroke(255);
-  fill(255,0,0);
-  // rect(20, 50, 10, 10);
-  fill(255,0,255);
-  
-  for(var i=0;i<segments.length;i++){
-    segments[i].display(20);
-  };
-}
-function drawGrid() {
-  stroke(255);
-  fill(120);
-  for (var x=-width; x < width; x+=40) {
-    line(x, -height, x, height);
-    text(x, x+1, 12);
-  }
-  for (var y=-height; y < height; y+=40) {
-    line(-width, y, width, y);
-    text(y, 1, y+12);
-  }
-}
+
+
+// function drawGrid() {
+//   stroke(255);
+//   fill(120);
+//   for (var x=-width; x < width; x+=40) {
+//     line(x, -height, x, height);
+//     text(x, x+1, 12);
+//   }
+//   for (var y=-height; y < height; y+=40) {
+//     line(-width, y, width, y);
+//     text(y, 1, y+12);
+//   }
+// }
 
 
 class LSegment {
@@ -62,16 +59,10 @@ class LSegment {
       this.lowY = low;
       this.highY = high;
     }
-    display(pieces){
-      stroke(255,0,0)
-      fill(255,0,0)
+    mapPixels(pieces){
+      var list = [];
       var lowX = this.lowY*this.slope+this.zero;
-      rect(lowX, this.lowY, 10,10);
-      console.log('low-'+lowX+','+this.lowY);
-
-      var highX = this.highY*this.slope+this.zero;
-      rect(highX, this.highY, 10,10);
-      console.log('high-'+highX+','+this.highY);
+      list.push(new Pixel(lowX, this.lowY));
       
       var parts = pieces-1;
       
@@ -79,8 +70,13 @@ class LSegment {
         var segLength = (this.highY-this.lowY)/parts;
         var midY = this.lowY+ (i*segLength);
         var midX = midY*this.slope+this.zero;
-        rect(midX,midY, 10, 10);
+        list.push(new Pixel(midX,midY));
       }
+
+      var highX = this.highY*this.slope+this.zero;
+      list.push(new Pixel(highX, this.highY));
+
+      return list;
     }
 }
 
@@ -91,11 +87,32 @@ class Pixel {
     this.size = size;
   };
   
-  display() {
-    stroke(255,0,0)
-    fill(255,0,0)
-    
-    // rect(this.x -this.size/2,this.y-this.size/2 ,this.size,this.size)
+  display(r,g,b) {
+    stroke(r,g,b)
+    fill(r,g,b)    
     rect(this.x,this.y,this.size,this.size)
+  }
+}
+
+class Strip {
+  constructor(pixels=[]){
+    this.pixels = pixels;
+  }
+  wipe(r,g,b,speed){
+    var i = 0;
+    var colorIter = 1;
+    var pixels = this.pixels;
+    var intervalPID = setInterval(function(){
+      var pixel = pixels[i++];
+      pixel.display(r,g,b);
+      if(i>=pixels.length){
+        i=0;
+        var color = colors[colorIter++ % 3]
+        r=color[0];
+        g=color[1];
+        b=color[2];
+        // clearInterval(intervalPID);
+      }
+    },speed);      
   }
 }
